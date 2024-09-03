@@ -5,3 +5,5 @@ mod raw_async_std;
 mod raw_tokio;
 
 pub mod econ;
+
+pub use econ::Econ;
