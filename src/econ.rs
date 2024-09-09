@@ -22,6 +22,7 @@ impl Econ {
         Ok(())
     }
 
+    /// Disconnects from econ on connection
     pub fn disconnect(&mut self) -> std::io::Result<()> {
         assert!(
             self.raw.is_some(),
@@ -33,55 +34,52 @@ impl Econ {
         raw.disconnect()
     }
 
-    /// Tries to authenticate, returns `false` if password is incorrect`
+    /// Tries to authenticate, returns `false` if password is incorrect
     pub async fn try_auth(&mut self, password: impl Into<String>) -> std::io::Result<bool> {
-        assert!(
-            self.raw.is_some(),
-            "you can't authenticate without being connected"
-        );
-
-        let raw = self.raw.as_mut().unwrap();
+        let raw = self.get_raw_mut();
 
         Ok(raw.auth(password.into().as_str()).await?)
     }
 
-    /// Blocking *write* operation, sends line to socket
+    /// Non-blocking *write* operation, sends line to socket
     pub async fn send_line(&mut self, line: impl Into<String>) -> std::io::Result<()> {
-        assert!(
-            self.raw.is_some(),
-            "you can't send commands without being connected"
-        );
-
-        let raw = self.raw.as_mut().unwrap();
+        let raw = self.get_raw_mut();
 
         assert!(
             raw.is_authed(),
             "you can't send commands without being authed"
         );
 
-        raw.send(line.into().as_str()).await
+        raw.try_send(line.into().as_str()).await
     }
 
-    /// Blocking *read* operation, reads to buffer and appends to inner line buffer
-    /// if fetch set to `true`, otherwise returns popped line from line buffer
-    /// with no another operation
-    pub async fn recv_line(&mut self, fetch: bool) -> std::io::Result<Option<String>> {
+    /// Non-blocking *read* operation, reads to buffer and appends to inner line buffer
+    pub async fn fetch(&mut self) -> std::io::Result<()> {
+        let raw = self.get_raw_mut();
+
+        assert!(
+            raw.is_authed(),
+            "you can't fetch lines without being authed"
+        );
+
+        raw.try_read().await?;
+
+        Ok(())
+    } 
+
+    /// Pops line from inner line buffer
+    pub fn pop_line(&mut self) -> Option<String> {
+        let raw = self.get_raw_mut();
+
+        raw.pop_line()
+    }
+
+    fn get_raw_mut(&mut self) -> &mut EconRaw {
         assert!(
             self.raw.is_some(),
             "you can't fetch lines without being connected"
         );
 
-        let raw = self.raw.as_mut().unwrap();
-
-        if fetch == true {
-            assert!(
-                raw.is_authed(),
-                "you can't fetch lines without being authed"
-            );
-
-            raw.read().await?;
-        }
-
-        Ok(raw.pop_line())
+        unsafe { self.raw.as_mut().unwrap_unchecked() }
     }
 }

@@ -86,6 +86,10 @@ impl EconRaw {
         Ok(lines_amount)
     }
 
+    pub async fn try_read(&mut self) -> std::io::Result<usize> {
+        unimplemented!()
+    }
+
     pub async fn send(&mut self, line: &str) -> std::io::Result<()> {
         self.socket.write_all(line.as_bytes()).await?;
         self.socket.write_all("\n".as_bytes()).await?;
@@ -93,6 +97,10 @@ impl EconRaw {
         self.socket.flush().await?;
 
         Ok(())
+    }
+
+    pub async fn try_send(&mut self, _line: &str) -> std::io::Result<()> {
+        unimplemented!()
     }
 
     pub fn pop_line(&mut self) -> Option<String> {

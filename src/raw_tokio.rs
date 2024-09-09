@@ -1,6 +1,9 @@
 use std::net::SocketAddr;
 
-use tokio::{io::{AsyncReadExt, AsyncWriteExt}, net::TcpStream};
+use tokio::{
+    io::{AsyncReadExt, AsyncWriteExt},
+    net::TcpStream,
+};
 
 pub struct EconRaw {
     socket: TcpStream,
@@ -51,10 +54,8 @@ impl EconRaw {
         Ok(self.authed)
     }
 
-    pub async fn read(&mut self) -> std::io::Result<usize> {
+    async fn read_inner(&mut self, written: usize) -> std::io::Result<usize> {
         let mut lines_amount = 0;
-        let written = self.socket.read(&mut self.buffer).await?;
-
         if written != 0 {
             let mut lines: Vec<String> = String::from_utf8_lossy(&self.buffer[..written])
                 .replace('\0', "")
@@ -83,9 +84,42 @@ impl EconRaw {
         Ok(lines_amount)
     }
 
+    pub async fn _wait_to_read(&self) -> std::io::Result<()> {
+        self.socket.readable().await
+    }
+
+    pub async fn read(&mut self) -> std::io::Result<usize> {
+        let written = self.socket.read(&mut self.buffer).await?;
+
+        let lines_amount = self.read_inner(written).await?;
+
+        Ok(lines_amount)
+    }
+
+    pub async fn try_read(&mut self) -> std::io::Result<usize> {
+        let written = self.socket.try_read(&mut self.buffer)?;
+
+        let lines_amount = self.read_inner(written).await?;
+
+        Ok(lines_amount)
+    }
+
+    pub async fn _wait_to_send(&self) -> std::io::Result<()> {
+        self.socket.writable().await
+    }
+
     pub async fn send(&mut self, line: &str) -> std::io::Result<()> {
         self.socket.write_all(line.as_bytes()).await?;
         self.socket.write_all("\n".as_bytes()).await?;
+
+        self.socket.flush().await?;
+
+        Ok(())
+    }
+
+    pub async fn try_send(&mut self, line: &str) -> std::io::Result<()> {
+        self.socket.try_write(line.as_bytes())?;
+        self.socket.try_write("\n".as_bytes())?;
 
         self.socket.flush().await?;
 
