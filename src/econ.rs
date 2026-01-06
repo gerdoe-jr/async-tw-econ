@@ -1,9 +1,5 @@
 use std::net::SocketAddr;
 
-#[cfg(feature = "async-std")]
-use crate::raw_async_std::EconRaw;
-
-#[cfg(feature = "tokio")]
 use crate::raw_tokio::EconRaw;
 
 #[derive(Default)]
@@ -62,10 +58,7 @@ impl Econ {
     pub async fn send_line(&mut self, line: impl Into<String>) -> std::io::Result<()> {
         let raw = self.get_raw_mut();
 
-        assert!(
-            raw.is_authed(),
-            "can't send commands without being authed"
-        );
+        assert!(raw.is_authed(), "can't send commands without being authed");
 
         raw.try_send(line.into().as_str()).await
     }
@@ -74,10 +67,7 @@ impl Econ {
     pub async fn fetch(&mut self) -> std::io::Result<()> {
         let raw = self.get_raw_mut();
 
-        assert!(
-            raw.is_authed(),
-            "can't fetch lines without being authed"
-        );
+        assert!(raw.is_authed(), "can't fetch lines without being authed");
 
         raw.try_read().await?;
 
@@ -89,6 +79,10 @@ impl Econ {
         let raw = self.get_raw_mut();
 
         raw.pop_line()
+    }
+
+    pub fn is_alive(&self) -> bool {
+        self.is_alive
     }
 
     fn get_raw_mut(&mut self) -> &mut EconRaw {

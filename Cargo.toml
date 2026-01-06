@@ -1,6 +1,7 @@
 [package]
 name = "async-tw-econ"
-version = "0.8.0"
+version = "0.9.0"
+authors = ["Vlad <gerdoexx@gmail.com>"]
 edition = "2021"
 license = "MIT"
 readme = "README.md"
@@ -11,14 +12,4 @@ description = "Simple Rust library to use Teeworlds external console asynchronou
 
 
 [dependencies]
-# Only needed for async_std support
-async-std = { version = "1", optional = true }
-futures = { version = "0.3", optional = true }
-
-# Only needed for tokio support
-tokio = { version = "1", features = ["net", "io-util"], optional = true }
-
-[features]
-default = ["tokio"]
-tokio = ["dep:tokio"]
-async-std = ["dep:async-std", "dep:futures"]
+tokio = { version = "1", features = ["net", "io-util"]}

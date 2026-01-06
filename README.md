@@ -4,6 +4,8 @@
 
 Rust library provides you a simple asynchronous interface to interconnect with Teeworlds external console.
 
+Beware! Only `tokio` runtime is supported since `async-std` `TcpStream` seems to be unusable in this context.
+
 ## Example
 
 Let's say you have Teeworlds server running with `ec_password zohan` and `ec_port 6060` and you want to use it's econ.
