@@ -1,7 +1,14 @@
 [package]
 name = "async-tw-econ"
-version = "0.7.0"
+version = "0.8.0"
 edition = "2021"
+license = "MIT"
+readme = "README.md"
+keywords = ["teeworlds", "console"]
+categories = ["command-line-interface", "api-bindings"]
+repository = "https://github.com/gerdoe-jr/async-tw-econ"
+description = "Simple Rust library to use Teeworlds external console asynchronously"
+
 
 [dependencies]
 # Only needed for async_std support

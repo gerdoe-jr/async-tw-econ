@@ -11,6 +11,7 @@ pub struct EconRaw {
     lines: Vec<String>,
     unfinished_line: String,
     authed: bool,
+    auth_message: String,
 }
 
 impl EconRaw {
@@ -30,11 +31,22 @@ impl EconRaw {
             lines: Vec::new(),
             unfinished_line: String::new(),
             authed: false,
+            auth_message: "Authentication successful".to_string(),
         })
     }
 
-    pub fn disconnect(&mut self) -> std::io::Result<()> {
+    pub async fn reconnect(&mut self) -> std::io::Result<()> {
+        self.socket = TcpStream::connect(&self.socket.peer_addr().unwrap()).await?;
+
         Ok(())
+    }
+
+    pub async fn disconnect(&mut self) -> std::io::Result<()> {
+        self.socket.shutdown().await
+    }
+
+    pub fn set_auth_message(&mut self, auth_message: String) {
+        self.auth_message = auth_message;
     }
 
     pub async fn auth(&mut self, password: &str) -> std::io::Result<bool> {
@@ -84,10 +96,6 @@ impl EconRaw {
         Ok(lines_amount)
     }
 
-    pub async fn _wait_to_read(&self) -> std::io::Result<()> {
-        self.socket.readable().await
-    }
-
     pub async fn read(&mut self) -> std::io::Result<usize> {
         let written = self.socket.read(&mut self.buffer).await?;
 
@@ -102,10 +110,6 @@ impl EconRaw {
         let lines_amount = self.read_inner(written).await?;
 
         Ok(lines_amount)
-    }
-
-    pub async fn _wait_to_send(&self) -> std::io::Result<()> {
-        self.socket.writable().await
     }
 
     pub async fn send(&mut self, line: &str) -> std::io::Result<()> {
